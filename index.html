@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>非公式 超学生さん誕生日記念ガチャ </title>
+<style>
+  body {
+    background-color: #0A0A0C;
+    background-image: radial-gradient(circle at center, #1a1a24 0%, #0A0A0C 100%);
+    color: #EAEAEA;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* centerから変更：要素がはみ出た際に上が切れるのを防ぐ */
+    min-height: 100vh;
+    margin: 0;
+    font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', sans-serif;
+    overflow-x: hidden; /* 横スクロールは防ぐ */
+    overflow-y: auto;   /* 縦スクロールを許可する */
+  }
+
+  /* 画面全体のコンテナ */
+  .container {
+    width: 100%;
+    max-width: 1200px;
+    padding: 40px 20px; /* スマホでも見やすいように左右の余白を少し調整 */
+    margin: auto 0; /* 画面より中身が小さい時は上下中央、大きい時は上揃えになる設定 */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .header { font-size: 16px; color: #666; letter-spacing: 4px; margin-bottom: 20px; }
+  .title { 
+    font-size: 64px; 
+    font-weight: bold; 
+    font-family: serif;
+    text-shadow: 0 0 30px rgba(217,22,54,0.8);
+    margin-bottom: 40px; 
+    text-align: center; 
+    line-height: 1.2;
+  }
+
+  /* --- トップ画面 --- */
+  #top-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+  .box-icon { 
+    width: 120px; 
+    height: 120px; 
+    border: 3px solid #e07612; 
+    box-shadow: 0 0 30px rgba(230,194,41,0.2); 
+    transform: rotate(45deg); 
+    margin-bottom: 80px; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+  }
+  .box-inner { transform: rotate(-45deg); font-size: 40px; color: #da7019; }
+  
+  .btn-primary { 
+    background-color: #D91636; 
+    color: #fff; 
+    width: 320px; 
+    padding: 24px; 
+    border-radius: 12px; 
+    font-size: 24px; 
+    font-weight: bold; 
+    border: none; 
+    box-shadow: 0 4px 30px rgba(217,22,54,0.5); 
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .btn-primary:hover { transform: scale(1.05); }
+
+  /* --- 結果画面（横並びレイアウト） --- */
+  #result-view {
+    display: none;
+    width: 100%;
+    max-width: 1000px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 60px;
+  }
+  
+  /* 左側：サムネイル領域 */
+  .result-left {
+    flex: 1;
+    width: 100%;
+  }
+  .thumbnail-link {
+    display: block;
+    position: relative;
+    text-decoration: none;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .thumbnail-link:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 50px rgba(217,22,54,0.4);
+  }
+  .thumbnail-img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    display: block;
+  }
+  .play-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(217, 22, 54, 0.9);
+    color: #fff;
+    padding: 16px 32px;
+    border-radius: 40px;
+    font-weight: bold;
+    font-size: 18px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+
+  /* 右側：情報とボタン領域 */
+  .result-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .result-header { font-size: 20px; color: #E6C229; margin-bottom: 20px; letter-spacing: 3px; }
+  .song-title { font-size: 40px; font-weight: bold; margin-bottom: 40px; line-height: 1.4; }
+  .artist-name { font-size: 24px; color: #aaa; font-weight: normal; margin-top: 10px; display: block; }
+  
+  .btn-secondary { 
+    background-color: transparent; 
+    border: 2px solid #D91636; 
+    color: #fff; 
+    width: 100%; 
+    max-width: 300px;
+    padding: 20px; 
+    border-radius: 12px; 
+    font-size: 18px; 
+    font-weight: bold; 
+    margin-bottom: 24px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  .btn-secondary:hover { background-color: rgba(217,22,54,0.1); }
+  
+  .btn-text { background: none; border: none; color: #777; font-size: 16px; text-decoration: underline; cursor: pointer; padding: 0; }
+  .btn-text:hover { color: #aaa; }
+
+  /* --- スマホ向け（幅が800px以下、または高さが500px以下の場合）のレスポンシブ設定 --- */
+  @media (max-width: 800px), (max-height: 500px) {
+    .container {
+      padding: 10px; /* 画面端の余白を最小限に */
+    }
+    
+    .title {
+      font-size: 32px; /* タイトルを小さく */
+      margin-bottom: 20px;
+    }
+    
+    .box-icon {
+      width: 70px;
+      height: 70px;
+      margin-bottom: 30px;
+    }
+    .box-inner {
+      font-size: 28px;
+    }
+    
+    .btn-primary {
+      width: 240px;
+      padding: 12px;
+      font-size: 18px;
+    }
+
+    /* 結果画面の縮小 */
+    #result-view {
+      gap: 30px; /* サムネイルと文字の隙間を狭く */
+    }
+    .result-header {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    .song-title {
+      font-size: 24px; /* 長い曲名でも見切れないように縮小 */
+      margin-bottom: 20px;
+    }
+    .artist-name {
+      font-size: 14px;
+    }
+    .btn-secondary {
+      padding: 12px;
+      font-size: 16px;
+      margin-bottom: 16px;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ▼ 背景ループ動画 ▼ -->
+  <div id="bg-video-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; background-color: #000;">
+    <video src="background.mp4" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; opacity: 0.4; filter: blur(2px);"></video>
+  </div>
+
+<div class="container">
+  <div class="header">HAPPY BIRTHDAY</div>
+
+  <!-- 1. トップ画面 -->
+  <div id="top-view">
+    <div class="title">超学生さん<br>誕生日記念ガチャ</div>
+    <div class="box-icon"><div class="box-inner">?</div></div>
+    <button id="gachaBtn" class="btn-primary">ガチャを引く</button>
+  </div>
+
+  <!-- 2. ローディング（歯車演出）画面 -->
+  <div id="loading-view" style="display: none; width: 100%; height: 100vh; justify-content: center; align-items: center; background: #000;">
+    <video id="gacha-video" src="gacha_loading.mp4" playsinline style="width: 100%; max-width: 1200px; max-height: 100vh; object-fit: contain;"></video>
+  </div>
+
+  <!-- BGM用の音声データ-->
+  <audio id="result-bgm" src="electro_swing.mp3" loop></audio>
+  <!-- ボタン効果音用の音声データ -->
+  <audio id="click-sound" src="click-sound.mp3"></audio>
+  
+  <!-- <div id="loading-view">
+    <div class="gears-container">
+      <svg class="gear big-gear" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+      <svg class="gear small-gear" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </div>
+    <div class="loading-text">Now Loading...</div>
+  </div> -->
+
+  <!-- 3. 結果画面 -->
+  <div id="result-view">
+    <div class="result-left" id="video-container">
+      <!-- JavaScriptでサムネイル画像が挿入されます -->
+    </div>
+    <div class="result-right">
+      <div class="result-header">Tonight's Track...</div>
+      <div id="song-name" class="song-title"></div>
+      <button class="btn-secondary">結果をXでポストする</button>
+      <button id="retryBtn" class="btn-text">もう一度引く</button>
+    </div>
+  </div>
+
+<!-- ガチャ画面の下に配置するフッター -->
+  <div style="margin-top: 60px; font-size: 12px; color: #888; text-align: center; line-height: 1.6; border-top: 1px solid #333; padding-top: 20px;">
+    <p>※本サイトはファンが個人的に作成した非公式のものであり、ご本人様や関係企業様とは一切関係ありません。</p>
+    <p>お問い合わせ・削除要請等: <a href="https://twitter.com/barenboushogun" target="_blank" style="color: #D91636;">@barenboushogun</a></p>
+
+<!-- 折りたたみ式のクレジット表記 -->
+    <details style="margin: 15px auto; max-width: 400px; cursor: pointer; text-align: left; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+      <summary style="font-weight: bold; color: #aaa;">使用素材・引用元・参考元一覧</summary>
+      <ul style="padding-left: 20px; margin-top: 10px;">
+        <li>演出に使用している動画の元配信(こんにちは)：<a href="https://www.youtube.com/watch?v=mXjeTmN2aE4&list=PL5ohYb4e_1y0I9h_-Dls2NGVjmnkSupHf&index=28" target="_blank" style="color: #D91636;">【LIVE】け　も　の　に　な　り　た　い【ペヤング獄激辛】</a></li>
+        <li>演出に使用している動画の元配信(スクショタイム)：<a href="https://www.youtube.com/watch?v=nhnMRCVNWfc&list=PL5ohYb4e_1y0I9h_-Dls2NGVjmnkSupHf&index=5" target="_blank" style="color: #D91636;">【誕生日】9/19になるまで終われません【耐久配信】</a></li>
+        <li>演出に使用している動画の元配信(3 2 1)：<a href="https://www.youtube.com/watch?v=UBQs5gQjl2U&list=PL5ohYb4e_1y0I9h_-Dls2NGVjmnkSupHf&index=7" target="_blank" style="color: #D91636;"> YouTubeから謎の箱が届いたよ【重大発表もある】</a></li>
+        <li>結果画面のBGM: <a href="https://pixabay.com/ja/music/search/electro%20swing/" target="_blank" style="color: #D91636;">pixabay（Electro Swing by AurecTheme）</a></li>
+        <li>ローディング序盤のBGM: <a href="https://dova-s.jp/bgm/detail/1488#google_vignette" target="_blank" style="color: #D91636;">opentracks(タイムベンド by かずち)</a></li>
+        <li>効果音: <a href="https://soundeffect-lab.info/sound/anime/" target="_blank" style="color: #D91636;">効果音ラボ</a></li>
+        <li>歯車の効果音: <a href="https://www.pexels.com/" target="_blank" style="color: #D91636;">pixabay(Ancient Mechanical Gears by DRAGON-STUDIO)</a></li>
+        <li>立体テキストの参考: <a href="https://youtu.be/AsfWPo91jj8?si=sRuDnJ38FUuBdACM" target="_blank" style="color: #D91636;">【Blender】フォントを加工してみよう【ロゴ・タイトル作り】</a></li>
+        <li>歯車アニメーションの参考: <a href="https://www.youtube.com/watch?v=uNnLfrgp-u0" target="_blank" style="color: #D91636;">【Blenderチュートリアル】歯車を連動させてアニメーションさせる方法</a></li>
+        <li>カメラワーク参考: <a href="https://www.youtube.com/watch?v=KZRyNYjPoRE" target="_blank" style="color: #D91636;">【6分でわかる】360度回転し続けるアニメーションの作り方【blender】</a></li>
+        <li>カメラワーク参考: <a href="https://www.youtube.com/watch?v=1yz9KOJP3Iw" target="_blank" style="color: #D91636;">【裏技】かっこいいカメラワークの作り方【Blender講座】【ずんだもん】</a></li>
+        <li>レンダリング参考: <a href="https://youtu.be/RC2WAb-qWqg?si=GSK10NEpK09GppBE" target="_blank" style="color: #D91636;">blenderで動画を出力（レンダリング）する方法【blender2.9】</a></li>
+        <li>:ワールド背景参考 <a href="https://youtu.be/9hUo435X6f0?si=IvLOTfWO1N4BUNA4" target="_blank" style="color: #D91636;">【Blender】惑星大きさ比較アニメを作ろう【初心者でも大丈夫】</a></li>  
+        <li>宇宙テクスチャーサイト: <a href="https://www.solarsystemscope.com/textures/" target="_blank" style="color: #D91636;">SCOP</a></li>
+      </ul>
+  </div>
+</div>
+
+<script>
+  // 楽曲リスト
+  const songList = [
+    { title: "解読不能だった / 超学生", id: "gibx_3OMASE" },
+    { title: "ネクロバイト", id: "QF3Jfv6gzsM"},
+    { title: "【超学生】永久アンフィテアトルへようこそ", id: "uebqQNkmf7Y"},
+    { title: "【超学生】阿弥陀籤", id: "XHG89IyDXA4"},
+    { title: "【超学生】しゅきしゅきメイドマスカレイド", id: "5_jo31_0aKA"},
+    { title: "【超学生】アイラブインターネット", id: "ILvbrEtUw7A"},
+    { title: "【超学生】pa pa pa", id: "t8DePOVpJEg"},
+    { title: "【超学生】インキュベーター", id: "aZrTRIcA0uY"},
+    { title: "【超学生】キラーチューナー", id: "yFf1voImS68"},
+    { title: "【超学生】Hazure", id: "t7ktk2GI0OI"},
+    { title: "【超学生×96猫×天月】Musication", id: "ZszYOF32LFc"},
+    { title: "【超学生】オーバールック", id: "Y2GaKXCsIO4"},
+    { title: "【超学生】Abyss-Over", id: "o6PAQptuOww"},
+    { title: "【超学生】超獣戯画", id: "HXOwje0iXEw"},
+    { title: "【超学生】ヒス", id: "7XoFmv6Xs2U"},
+    { title: "【超学生】ファントム", id: "-8krqJnU7yM"},
+    { title: "", id: "oLwwunO3kGs"},
+    { title: "【超学生】スペースキャットビッグバン", id: "Iso1v-WIT24"},
+    { title: "【超学生】Fake Parade", id: "ZxsTJ12-IsA"},
+    { title: "【超学生×cosMo＠暴走P】ガトリングアジテイタア @オリジナルMV", id: "36g2rLRgtFg"},
+    { title: "【超学生】Let's go", id: "f4lUS7uYPp4"},
+    { title: "【超学生】Did you see the sunrise?", id: "r41R0BKosVw"},
+    { title: "【超学生】サイコ", id: "9m8oYzrAHeE"},
+    { title: "超学生「インゲル」【オリジナルMV】", id: "uJ_NEGn6yvY"},
+    { title: "【超学生】Untouchable", id: "97FVoXELcUg"},
+    { title: "【超学生】Innocent Tyrant", id: "wa_C2wchZus"},
+    { title: "【超学生】けものになりたい！", id: "wvAW1qLPmBo"},
+    { title: "【超学生】ヒト", id: "8oxhS-VGaAg"},
+    { title: "【超学生】バットオンリーユー", id: "-0RSKdP-Mbg"},
+    { title: "【超学生】ルームNo.4", id: "u8JQL5D4Y9E" },
+    { title: "Give it to me", id: "1C_ovRLegX8"},
+    {title: "テレキャスタービーボーイ (long ver.)", id: "eLbKciXoZiE"},
+    {title: "ビターチョコデコレーション (超学生 edition)", id: "bcb3P6D_guA"},
+    {title: "CLAPTRAP", id: "I-r5SnduFDY"},
+    {title: "CGS", id: "ZNNS7wvxT0w"},
+    {title: "Fun de Monica", id: "Viojc25a9Yk"},
+    {title: "LeveChi", id: "Res5RF0DvPE"},
+    {title: "湯月凜空 - 虚無ぐすり【Music Video】 / Riku Yuzuki - Nihilistic Drug", id: "ZOgRSb0j7LY"},
+    {title: "湯月凜空 - 愛罠【Music Video】 / Riku Yuzuki - I Wanna Xxx", id: "9MXvMQVdeSw"},
+    {title: "インスタントチルドレン / 湯月凜空", id: "tHxGdbR-8pI"},
+
+    { title: "ニャートビート feat.超学生 / 弌誠：MUSIC VIDEO", id: "G9vD9Zjlqc0"},
+    { title: "【3D MV】ReawakeR - LiSA (ft. Felix from Stray Kids) || Hakos Baelz x 超学生 COVER", id: "6jfmO1B4n58"},
+    { title: "HOWL／すち×超学生【Cover】", id: "O-skNib5Yo0"},
+    { title: "Giga & TeddyLoid - ヴィオレッタ feat. 超学生 (Official Video)", id: "_8ZyMJOVLTM"},
+    { title: "最強！(feat. 雨良 Amala, 超学生, 段原瑠々)", id: "cZ2u_fsxPaA"},
+    { title: "【 呪術廻戦 】AIZO / King Gnu coverd by 天月×超学生", id: "xZPaO2QkbS4"},
+    { title: "【Blessing】歌ってみた【ちゃんげろソニック2026】", id: "4D315XOhDEU"},
+    { title: "KOHTA YAMAMOTO feat. 超学生「Struggle」Official Video ", id: "L3y93MVnlXc"},
+    { title: "超学生 - HIDE & SEEK", id: "NfsR-sUEYOk"},
+    { title: "SNOWRICE STUDIO - SPILLAGE", id: "g841AzI7anQ"},
+    { title: "ファイアঌフライ", id: "Hh-RkbSCd2k"},
+    { title: "Ｗ●ＲＫ　Cover. LOLUET × 超学生", id: "xqzSQBdINj4"},
+    { title: "ラヴィブルーム / biz×ZERA feat 超学生", id: "mjbqRzNNgMM"},
+    { title: "愛ちゅードク ／ 天月×超学生×かいりきベア", id: "z6a4sWvAQ_Q"},
+    { title: "マトリョシカ / ハチ【Band arrange covered by 超学生×七海うらら】", id: "bWvgPBXkti0"},
+    { title: "深潭", id: "bvyfcJn7OCE"},
+    { title: "ウォルピスカーター MV『おくりうた feat.超学生』", id: "VdFizoabIdY"},
+    { title: "メルティックヘル feat. 超学生 / ナナヲアカリ", id: "QkfmeJvqtuo"},
+    { title: "【 呪術廻戦 】 SPECIALZ／King Gnu coverd by 天月×超学生", id: "gRo8N_vUCnY"},
+    { title: "七つの大罪「七妄症」", id: "UNhz_YSBJFw"},
+    { title: "Music Video アルバ / Gero×超学生×柊キライ", id: "TGBf4-_8gYI"},
+    { title: "【MV】パーペキヒーロー【天月/まふまふ/un:c/Gero/少年T/そらる/超学生/となりの坂田。/luz】", id: "NZaTctXb-nY"},
+    { title: "ヒバナ／DECO*27 歌ってみた by 天月×超学生", id: "lnA29nmcyAo"},
+    { title: "【MV】顔も本名も知らなくったって俺ら友達だろう？／げろソニ2022", id: "APB8N4swAMU"},
+    { title: "FAKE TYPE. 【GO ON YA WAY feat.超学生】 MV", id: "h1B2Ph5SewQ"},
+    { title: "ドロシー / 缶缶 feat.超学生", id: "1UtCVVbiM4E"},
+    { title: "アイデンティティ ver.luz×超学生【COVER】", id: "sPXKBPI5asI"},
+    { title: "【超学生×アンダーバー】一途/King Gnu -呪術廻戦0-【歌ってみた】", id: "BUArM1M0Epw"},
+    { title: "【MV】人生に拍手喝采を／げろソニ2021", id: "T6ROI_lCOe8"},
+    { title: "霄 - たゆたい (ft. 超学生)", id: "8tacpf0VpC"},
+    { title: "目抜き通り / 緑仙×超学生 Cover", id: "lzDRbf2iN1Y"},
+    { title: "最強の漢達が「+♂」を歌ってみたら学級崩壊", id: "RVgBKTKx0Xw"},
+    { title: "Dr.レイシオの形而上学的入浴理論 from「スターレイルLIVE2025」", id: "HSTDLb20lu8"},
+    {title: "【SLH】『コイノウタ feat. 超学生 』-official mv-", id: "Sl-7jXvXEZk"},
+
+    { title: "【超学生×天月】Dig down!! @歌ってみた", id: "RNwBX3RgLBY"},
+    { title: "【超学生】分かっちゃいないね @歌ってみた", id: "6kOz0LyJGPM"},
+    { title: "【超学生】未完成婚姻論 @ご本人と歌ってみた", id: "mjOXTTv_fHc"},
+    { title: "【超学生×天月×Gero×センラ×そらる】好きすぎて滅！ @歌ってみた", id: "4FmsSWk8K1c"},
+    { title: "【超学生×超学生(12)】ちっちゃな私 @歌ってみた", id: "sRbdfw5EzME"},
+    { title: "【超学生】あーあ @歌ってみた", id: "-RCCOjaLGv8"},
+    { title: "【超学生】セレナーデ @歌ってみた", id: "qls3KwNiwKk"},
+    { title: "【超学生×Sou】LUVORATORRRRRY! - Arrange ver. @歌ってみた", id: "yItXdroqHiI"},
+    { title: "「阿弥陀籤 - Amidakuji」MV - TVアニメ『桃源暗鬼』Ver. -", id: "D8GybKU4Wso"},
+    { title: "【超学生×四季凪アキラ】おこちゃま戦争 @歌ってみた", id: "0PfwzZKzooQ"},
+    { title: "【超学生】IRIS OUT @歌ってみた", id: "fiG_T-0zFT8"},
+    { title: "【超学生】ネクロバイト【可不・重音テトSV】", id: "RG2E2jGCE9I"},
+    { title: "【超学生×Luca Kaneshiro】GETCHA! @歌ってみた", id: "SLn0Lq-Job4"},
+    { title: "【超学生×天月】D/N/A @歌ってみた", id: "SL4botI3RWs"},
+    { title: "【超学生】しかばねの踊り @歌ってみた", id: "yOGb-hK1TSg"},
+    { title: "【超学生】親愛なるあなたは火葬 @歌ってみた", id: "tHuVAKaXz1o"},
+    { title: "【超学生】メクルメ @歌ってみた", id: "f4YUFtaA228"},
+    { title: "【超学生】ダイダイダイダイダイキライ @歌ってみた", id: "o8OpehC5OKQ"},
+    { title: "【超学生】酔いどれ知らず @歌ってみた", id: "6tBlXdGYSVk"},
+    { title: "【超学生】蜜月アン・ドゥ・トロワ @歌ってみた", id: "bWTOUWeWE24"},
+    { title: "【超学生】テレパシ @歌ってみた", id: "CMV_HN9Bawk"},
+    { title: "【超学生】Fighting My Way @歌ってみた", id: "k7RP6xPcJLs"},
+    { title: "【超学生】テトリス @歌ってみた", id: "c_6pYOnRopQ"},
+    { title: "【超学生】あられやこんこん @歌ってみた", id: "ogOkTm1mHpQ"},
+    { title: "【超学生】IN_MY_HEAD @歌ってみた", id: "VWaF939_rdg"},
+    { title: "【超学生】偽物人間40号 @歌ってみた", id: "OZ20rjrJl_Y"},
+    { title: "【超学生】みむかｩわナイストライ @歌ってみた", id: "4OxV3DXnwLA"},
+    { title: "【超学生】キャットラビング @歌ってみた", id: "dRAtRI-txIU"},
+    { title: "【超学生】モニタリング @歌ってみた", id: "cGhu-coi_sI"},
+    { title: "【超学生】ラブカ？ @歌ってみた", id: "uT-b3FiEHmg"},
+    { title: "【超学生】BRAIN @歌ってみた", id: "R5_J9tdogzg"},
+    { title: "【超学生】化けの花 @歌ってみた", id: "2NCw6I2-dEg"},
+    { title: "【超学生×ベルモンド・バンデラス】Loser, Baby @歌ってみた", id: "z3Hf6ZWZ3Eo"},
+    { title: "【超学生】仮装狂騒曲 @歌ってみた", id: "wQYnPghoZZ4"},
+    { title: "【超学生】バニーガール @歌ってみた", id: "M4W6EWYfE4s"},
+    { title: "【超学生×Gero】ファタール @歌ってみた", id: "2iDTteXUQB0"},
+    { title: "【超学生】ヤババイナ @歌ってみた", id: "StJdpSmb9FA"},
+    { title: "【超学生】君が生きてなくてよかった @歌ってみた", id: "gpoflHHINeg"},
+    { title: "【超学生】山田PERFECT @歌ってみた", id: "Ygb_KxMxgjQ"},
+    { title: "【超学生】モエチャッカファイア @歌ってみた", id: "7haWgKrjih4"},
+    { title: "【超学生】サッドガール・セックス @歌ってみた", id: "NeOWr9-mIKo"},
+    { title: "【超学生】アンハッピーリフレイン @歌ってみた", id: "6iG5LGnpVY4"},
+    { title: "【超学生×四季凪アキラ×緑仙】Beyond the way @歌ってみた", id: "K3He6NoAPzM"},
+    { title: "【超学生】㋰責任集合体 @歌ってみた", id: "ETs2wKOtq7s"},
+    { title: "【超学生】睨めっ娘 @歌ってみた", id: "wDnbflP_P4M"},
+    { title: "【超学生】BUTCHER VANITY @歌ってみた", id: "7UWye3HlZh4"},
+    { title: "【超学生】ルル @歌ってみた", id: "rPFUuM4Yv2A"},
+    { title: "【超学生】しあわせレストラン @歌ってみた", id: "A85elsOh5Ds"},
+    { title: "【超学生】はいよろこんで", id: "DWqN2LAv200"},
+    { title: "【超学生×四季凪アキラ】ずうっといっしょ！ @歌ってみた", id: "aQIigBDBggA"},
+    { title: "【超学生】ラビットホール @歌ってみた", id: "-YPzIjQ8EHI"},
+    { title: "【超学生】メズマライザー @歌ってみた", id: "k4CouD4Z07Y"},
+    { title: "【超学生】ロスタイムメモリー @歌ってみた", id: "OBBiasdcZkQ"},
+    { title: "【超学生】Stayed Gone @歌ってみた", id: "begNcnOY0vc"},
+    { title: "【超学生】Dec. @歌ってみた", id: "ZCZvBcqhj1E"},
+    { title: "【超学生】ビノミ @歌ってみた", id: "TI3U1VnKiSY"},
+    { title: "【超学生×七海うらら】のぼせもんHERO @歌ってみた", id: "L3Yy2dzJ7Dk"},
+    { title: "【超学生】Poison @歌ってみた (English Ver. )", id: "KrSnS_zb7mE"},
+    { title: "【超学生】Poison @歌ってみた", id: "8j_h_T4VJj8"},
+    { title: "【超学生】INSANE @歌ってみた", id: "0eVouMAYA5Y"},
+    { title: "【超学生】オーバーライド @歌ってみた", id: "5hKDrbOwYdQ"},
+    { title: "【超学生】イガク @歌ってみた", id: "J8ITMs6Aq1Q"},
+    { title: "【超学生】鬼ノ宴 @歌ってみた", id: "r1b659qjTrE"},
+    { title: "【超学生】歪なわけ、教えてあげる @歌ってみた", id: "U1PUJuWEQOo"},
+    { title: "【超学生】刀ピークリスマスのテーマソング2023 (ENG ver.) @歌ってみた", id: "B4IEtk89NsE"},
+    { title: "【超学生】混沌ブギ @歌ってみた", id: "7rxNdDn3duY"},
+    { title: "【超学生】8番出口 @歌ってみた", id: "G5yiW-uSW68"},
+    { title: "【超学生】インザバックルーム @歌ってみた", id: "xqOj0TZ5cyQ"},
+    { title: "【超学生】怪電話 @歌ってみた", id: "2qg69e95aZw"},
+    { title: "【超学生】唱 @歌ってみた", id: "EwOsclBxl48"},
+    { title: "【超学生】ヴィラン @歌ってみた", id: "M7WF35LGoQY"},
+    { title: "【超学生】ホントノ @歌ってみた", id: "mWsKJfRGbNY"},
+    { title: "【超学生×天月×ウォルピスカーター】DOGLAND @歌ってみた", id: "Ik34jN3V5As"},
+    { title: "【超学生×四季凪アキラ】威風堂々 @歌ってみた", id: "z-_vxDY1Gu0"},
+    { title: "【超学生】ゾンビ @歌ってみた (Giga Remix)", id: "xLyWXvp7Vxc"},
+    { title: "【超学生】脳内革命ガール @歌ってみた", id: "e_puKYFNooU"},
+    { title: "【超学生】デーモンロード @歌ってみた", id: "EDCvAY33f6E"},
+    { title: "【超学生】NIGHT DANCER @歌ってみた", id: "jVHT4-skVYY"},
+    { title: "【超学生】命辛辛 @歌ってみた", id: "ihjf0qlyTqE"},
+    { title: "【超学生】アタシ @歌ってみた", id: "krit-YD9vEg"},
+    { title: "【超学生】Loveit? @歌ってみた", id: "np_V4LC0oZo"},
+    { title: "【超学生×ウォルピスカーター】レクイエム @歌ってみた", id: "CG11wq5s9CU"},
+    { title: "【超学生】Be My Guest @歌ってみた【ベルモンド・バンデラス】", id: "A6DpfUCJ2ZM"},
+    { title: "【超学生】アイドル @歌ってみた", id: "xCtu3iMxBsg"},
+    { title: "【超学生】うどん @歌ってみた", id: "ugM4eskz1xg"},
+    { title: "【超学生×四季凪アキラ】ラグトレイン @歌ってみた", id: "fY8ReipaFWI"},
+    { title: "【超学生×恐山】匿名M @歌ってみた", id: "NZDpxkgs9ew"},
+    { title: "【超学生】エウレカレプリカ @歌ってみた", id: "ghWgZ2d---U"},
+    { title: "【超学生】刀ピークリスマスのテーマソング2022 @歌ってみた", id: "TOeIzXX3o5M"},
+    { title: "【超学生】ちゅ、多様性。 @歌ってみた", id: "O5EvntQ2NFE"},
+    { title: "【超学生】Who? @歌ってみた", id: "xbgxP3oPbTo"},
+    { title: "【超学生】パンダヒーロー @歌ってみた", id: "0NlyTCJxLt4"},
+    { title: "【超学生】げのげ @歌ってみた", id: "HIynBN37RfU"},
+    { title: "【超学生】ラヴィ @歌ってみた", id: "obcJ7noF3qM"},
+    { title: "【超学生】KICK BACK @歌ってみた", id: "lGKLrn9uAVM"},
+    { title: "【超学生】Overdose @歌ってみた", id: "rNta5Fo6K7U"},
+    { title: "【超学生】初音ミクの消失 @歌ってみた", id: "JIcxlPcEJHA"},
+    { title: "【超学生】キッカイケッタイ @歌ってみた", id: "B7XfYv0KB0Q"},
+    { title: "【超学生】ヘブンドープ @歌ってみた", id: "kFCaTJvddM0"},
+    { title: "【超学生】QUEEN @歌ってみた", id: "DbwCKOlT9uU"},
+    { title: "【超学生】ルシファー @歌ってみた", id: "uMYyCnVHrNA"},
+    { title: "【超学生】エゴロック(long ver.) @歌ってみた", id: "AH8XGFLc6KE"},
+    { title: "【超学生】Shadow Shadow @歌ってみた", id: "hT4rmRfzSuA"},
+    { title: "【超学生】バグ @歌ってみた", id: "BqHClbvNUDI"},
+    { title: "【超学生】Kruel Kreator @歌ってみた", id: "eo_l2iVQHAQ"},
+    { title: "【超学生】デイバイデイズ @歌ってみた", id: "ZbzFmRfAS-8"},
+    { title: "【超学生】愛して愛して愛して @歌ってみた", id: "w70JOM_ixiw"},
+    { title: "【超学生】い〜やい〜やい〜や @歌ってみた", id: "acl_qQfLN3A"},
+    { title: "【超学生】モンスター @歌ってみた", id: "tzNEm-Cpp-Q"},
+    { title: "【超学生】ミザン @歌ってみた", id: "dhgCfjtUUhQ"},
+    { title: "【超学生】黒塗り世界宛て書簡 @歌ってみた", id: "kPr6fMQTtaI"},
+    { title: "【超学生】アンノウン・マザーグース @歌ってみた", id: "izdGOUy5NN8"},
+    { title: "【超学生】ヴィータ @歌ってみた", id: "jN-iQaXautI"},
+    { title: "【超学生】うたかた @歌ってみた", id: "WVyB4D2zwwY"},
+    { title: "【超学生】たりねぇ @歌ってみた", id: "0PT2piocK-E"},
+    { title: "【超学生】ド屑 @歌ってみた", id: "wuAcfGl5Zxk"},
+    { title: "【超学生】魔法少女とチョコレゐト @歌ってみた", id: "DO-nNE-_wJE"},
+    { title: "【超学生】KING BITCH @歌ってみた", id: "xM8nLGfrsP0"},
+    { title: "【超学生】ニューダーリン @歌ってみた", id: "DO2PsQFrwRY"},
+    { title: "【超学生】タタラ @歌ってみた", id: "ueyymGj0iiE"},
+    { title: "【超学生】Nightmare @歌ってみた", id: "jmJ9dkouXlc"},
+    { title: "【超学生】きゅうくらりん @歌ってみた", id: "Q1hxgfuxqmE"},
+    { title: "【超学生】サラマンダー @歌ってみた", id: "OCypglnKYPo"},
+    { title: "【超学生】CH4NGE @歌ってみた", id: "mPXrqn5V97U"},
+    { title: "【超学生】へべれけジャンキー @歌ってみた", id: "UaqkbFBuQqw"},
+    { title: "【超学生×緑仙】p.h. @歌ってみた", id: "00HhT2Z7zQY"},
+    { title: "【超学生】ECHO @歌ってみた", id: "1QUmmtnQfpQ"},
+    { title: "【超学生】ロウワー @歌ってみた", id: "mJ-bx1iAoC8"},
+    { title: "【超学生】触れたら最後 @歌ってみた", id: "HGfWkCqKHKs"},
+    { title: "【超学生】ウオノエガール @歌ってみた", id: "GeTBAWOrA24"},
+    { title: "【超学生】モザイクロール (Reloaded) @歌ってみた", id: "qqrry21gCbY"},
+    { title: "【超学生】シャンティ @歌ってみた", id: "1XIvScrEirk"},
+    { title: "【超学生】てねてね @歌ってみた", id: "lDORfFLMte0"},
+    { title: "【超学生】ボトム @歌ってみた", id: "NHf1QPv8WZQ"},
+    { title: "【超学生】EYE @歌ってみた", id: "IcUXqQI8JLk"},
+    { title: "【超学生】ハルノ寂寞 @歌ってみた", id: "fGOnZJNh630"},
+    { title: "【超学生】カレシのジュード @歌ってみた", id: "d51j7ftvV7E"},
+    { title: "【超学生】ぴんく @歌ってみた", id: "M5WYZVYa3Kw"},
+    { title: "【超学生】食虫植物 @歌ってみた", id: "rl9ARYdH2L4"},
+    { title: "【超学生】シビュラ @歌ってみた", id: "i3DKw9VfjjM"},
+    { title: "【超学生】フォニイ @歌ってみた", id: "-sOhlsczaUY"},
+    { title: "【超学生】タイニーバニー @歌ってみた", id: "_BKfm9CY-W4"},
+    { title: "【超学生】potatoになっていく @歌ってみた", id: "o8mAUtcaEu0"},
+    { title: "【超学生】ただ選択があった @歌ってみた", id: "aHlcGYf4R8A"},
+    { title: "【超学生】爆笑 @歌ってみた", id: "x1IqCBOZQI8"},
+    { title: "【超学生】ノンブレス・オブリージュ @歌ってみた", id: "jIvH_KWYHgA"},
+    { title: "【超学生】ナミダ @歌ってみた", id: "JYIT5lix_8U"},
+    { title: "【超学生 × x0o0x_】LAB=01 @歌ってみた", id: "mI8KKipWEp4"},
+    { title: "【超学生】エウレカ @歌ってみた", id: "i_K1BLpOZqQ"},
+    { title: "【超学生】映えない @歌ってみた", id: "8Zyy7zfSmV0"},
+    { title: "【超学生】永遠の不在証明 @歌ってみた", id: "2QbWB5Lu7QQ"},
+    { title: "【超学生】『んっあっあっ。』 @歌ってみた", id: "nOs6CXPkpSI"},
+    { title: "【超学生】ヒトリユラリ @歌ってみた", id: "6msYzC7vfkk"},
+    { title: "【超学生】R.I.P.ゴシップの海 @歌ってみた", id: "Alvse6-ZNvc"},
+    { title: "【超学生】‌ @歌ってみた", id: "-hFi8QVtBmc"},
+    { title: "【超学生】キュートなカノジョ @歌ってみた", id: "5g-B6JMSw_g"},
+    { title: "【超学生】ガランド @歌ってみた", id: "wvjGgkJ6iT4"},
+    { title: "【超学生】エンヴィーベイビー @歌ってみた", id: "IgSWi9HxXw8"},
+    { title: "【超学生】回生 @歌ってみた", id: "-9HHD0sntMo"},
+    { title: "【超学生】オルターエゴ @歌ってみた", id: "BlLOg-3PVrw"},
+    { title: "【超学生×緑仙】怪物 @歌ってみた", id: "WOM2omPVIGQ"},
+    { title: "【超学生】スヂ @歌ってみた", id: "usTsI_ZwOtE"},
+    { title: "【超学生】春嵐 @歌ってみた", id: "sNp3paXwUIA"},
+    { title: "【超学生】メビウス @歌ってみた", id: "JDzppEKF16I"},
+    { title: "【超学生】ドクター＝ファンクビート @歌ってみた", id: "lcjIVCwbUxs"},
+    { title: "【超学生】マフィア @歌ってみた", id: "3HfBidP3DRM"},
+    { title: "【超学生】ヴィクター @歌ってみた", id: "peD1Gd4JJt8"},
+    { title: "【超学生】ビーバー @歌ってみた", id: "BEb4XGXg78U"},
+    { title: "【超学生】マカロン @歌ってみた", id: "OnGbk6dI7Zc"},
+    { title: "【超学生】ハレハレヤ @歌ってみた", id: "KPlrXTOzegY"},
+    { title: "【超学生】アイムハイ @歌ってみた", id: "244BTnR-Gmg"},
+    { title: "【超学生】孤独の宗教 @歌ってみた", id: "yRP14d3yuPo"},
+    { title: "【超学生】頓珍漢の宴 @歌ってみた", id: "H3BbhUTtWlQ"},
+    { title: "【超学生】ネロイズム @歌ってみた", id: "gB3Jh2xFqmg"},
+    { title: "【超学生】Myosotis @歌ってみた", id: "bF8QtjW-Qao"},
+    { title: "【超学生】Wild Side @歌ってみた", id: "Vq7Carj-TcE"},
+    { title: "【超学生】君と重ねたモノローグ @歌ってみた", id: "HCyUXEEtmyk"},
+    { title: "【超学生】パケットヒーロー @歌ってみた", id: "-EmzIPoFg68"},
+    { title: "【超学生】KING @歌ってみた", id: "lreXthpnlRo"},
+    { title: "【超学生】 @歌ってみた", id: "gWeB35X7RRg"},
+    { title: "【超学生】スカシユリ @歌ってみた", id: "gK-YtyMphfQ"},
+    { title: "【超学生】ぼくの夢、メチャクソ無限湧き @歌ってみた", id: "bKQ6rHDpCys"},
+    { title: "【超学生】エゴロック @歌ってみた", id: "NAejhBKJw2c"},
+    { title: "【超学生】ノイローゼ @歌ってみた", id: "It8shLUUjL0"},
+    { title: "【超学生】邪魔 @歌ってみた", id: "ETNE3hHUuBc"},
+    { title: "【超学生】うみなおし @歌ってみた", id: "hJj-hfNvPLM"},
+    { title: "【超学生】i love you @歌ってみた", id: "lLZOYM7nea8"},
+    { title: "【超学生】夢遊病者は此岸にて @歌ってみた", id: "iTgK7pPOL6E"},
+    { title: "【超学生】BL @歌ってみた", id: "d0xPOKZukQ8"},
+    { title: "【超学生】アングレイデイズ @歌ってみた", id: "l3wRi0BWQME"},
+    { title: "【超学生】再演 @歌ってみた", id: "2F9LW7cjd7A"},
+    { title: "【超学生】Penguin's Detour @歌ってみた", id: "5t664jchxy8"},
+    { title: "【超学生】ボッカデラベリタ @歌ってみた", id: "bLTPkqEjiIA"},
+    { title: "【超学生】ジャンキーナイトタウンオーケストラ @歌ってみた", id: "27fPhhXyM3s"},
+    { title: "【超学生】レミングミング @歌ってみた", id: "7waYp-HV42I"},
+    { title: "【超学生】夜顔の告白 @歌ってみた", id: "PFpZUp4NpyQ"},
+    { title: "【超学生】オートファジー @歌ってみた", id: "zknrG9Zf6kg"},
+    { title: "【超学生】悪魔の踊り方 @歌ってみた", id: "-dO4gHj88Rk"},
+    { title: "【超学生】コールボーイ @歌ってみた", id: "OmCjx9lxZZw"},
+    { title: "【超学生】ベノム @歌ってみた", id: "wNCfi3xH6p8"},
+    { title: "【超学生×Ado】少女ケシゴム @歌ってみた", id: "RqBDz8dOWeA"},
+    { title: "【超学生】ビターチョコデコレーション @歌ってみた", id: "JUsgGIxJlj0"},
+    { title: "【超学生】光よ @歌ってみた", id: "eWday2U5SC0"},
+    { title: "【超学生】ホワイトハッピー @歌ってみた", id: "VFvoTMkmcnw"},
+    { title: "【超学生】エバ @歌ってみた", id: "vh_obR4Hzi4"},
+    { title: "【超学生】ヤミツキ @歌ってみた", id: "5Ux5_YemWPo"},
+    { title: "【超学生と】ドーナツホール -English ver.- @歌って踊ってみた【BLACK Panda】", id: "DwBqNJ3ZcpI"},
+    { title: "【超学生】ダーリン @歌ってみた", id: "RmHGSLOv0vk"},
+    { title: "【超学生】眩しいDNAだけ @歌ってみた", id: "7nxGm4cnu2w"},
+    { title: "イケボ歌い手と愉快なおじさんが「ロストワンの号哭」歌ってみた結果。", id: "qVgjErzKJ-g"},
+    { title: "【超学生と】うみたがり @歌って踊ってみた【BLACK Panda】", id: "MCuMNaz2RXE"},
+    { title: "【超学生×SoraSe】劣等上等 @歌ってみた", id: "vdYKDqOUD4I"},
+    { title: "【超学生】スーサイドパレヱド @歌ってみた", id: "hgyOKuL2Yn0"},
+    { title: "【フリーター×高校生】明星ギャラクティカ @歌ってみた【電池切れ×超学生】", id: "dOc8oD0D5so"},
+    { title: "【超学生】スロウダウナー @歌ってみた", id: "urGD6fXC_2w"},
+    { title: "【超学生】バッド・ダンス・ホール @歌ってみた", id: "rUhc0oQb4lo"},
+    { title: "【超学生×SoraSe】SNOBBISM @歌ってみた", id: "sXZocaUcPa0"},
+    { title: "【超学生】flos @歌ってみた", id: "5qxAEKDb0zo"},
+    { title: "【超学生】デビルマンのうた＠自作オケで歌ってみた", id: "mDMamdfefaA"},
+    { title: "【超学生】POP TEAM EPIC @歌ってみた", id: "yrAtNC4o0c8"},
+    { title: "【超学生と】嗤うマネキン@歌って踊ってみた【BLACK Panda】 / ”Laughing Mannequin”sung and danced Ver.SU→PANDA", id: "5NQwvvFpUF4"},
+    { title: "【フリーター×高校生】病名は愛だった@歌ってみた【電池切れ×超学生】", id: "15DegNpK8zw"},
+    { title: "【超学qu】リバーシブル・キャンペーン@歌ってみた", id: "D_rciCzpKkw"},
+    { title: "【超学生×SoraSe】阿吽のビーツ@歌ってみた", id: "HIN_Va5--Qs"},
+    { title: "【超学生】 惑星ループ を真面目に歌うはずだった", id: "4gigi4i_-Ck"},
+    { title: "【超学生と】マインドブランド@歌って踊ってみた【BLACK Panda】", id: "9zI9KjriiWg"},
+    { title: "【超学生】拝啓ドッペルゲンガー＠歌ってみた／ Dear Doppelganger (Ver.Chogakusei)", id: "vdjTfUzzbnE"},
+    { title: "【超学生×SoraSe】テスラは夢の中＠歌ってみた／ tesla wa yumenonaka (Ver.Chogakusei&SoraSe)", id: "65l4FGrHy8M"},
+    { title: "【超学生】フィクサー＠歌ってみた／ Fixer (Ver.Chogakusei)", id: "SCZANeNYUUQ"},
+    { title: "【超学生と】妄想疾患■ガール@歌って踊ってみた【BLACK Panda】", id: "VqOGWYZq-Sw"},
+    { title: "【超学生】妄想感傷代償連盟＠歌ってみた／ MKDR (Ver.Chogakusei)", id: "z2xVR0yDB_A"},
+    { title: "A Whole New World(COVER) 15years old", id: "56YORS-C35E"},
+    { title: "中学生２人で「ヒビカセ」歌って踊ってみた／”Hibikase”sung and danced by two junior high school students.", id: "cxX8tjLpqiY"},
+    { title: "【歌え！】ナンセンスの塊@歌ってみた/ A Lump of Nonsense (Ver.Chogakusei)", id: "t8FRprCIcK0"},
+    { title: "【オリジナルPV】渦をまく夕方＠歌ってみた/ Swirling Evening (Ver.Chogakusei)", id: "jME0m6HfbiA"},
+    { title: "【オリジナルPV】ゴーストルール(DIVELA REMIX)@歌ってみた/ Ghost Rule(DIVELA REMIX) Ver.Chogakusei", id: "dXCOQjVVTF8"},
+    { title: "【歌え！】脱法ロック@歌ってみた／ Law-evading Rock (Ver.Chogakusei)", id: "YwqZl2xri9o"},
+    { title: "【13歳が#11】スレッドネイション【カレンドール × 超学生】", id: "OUWRl4ijBnM"},
+    { title: "【13歳が#9】虎視眈々 / 梅とらP cover【カレンドール×超学生×空瀬】", id: "wGtO7bkapIY"},
+    { title: "「祭りだヘイカモン」歌ってみた【超学生】／ It’s Matsuri, Hey Come On! (Ver.Chogakusei)", id: "j0xL_z3o-sY"},
+    { title: "アンチビート／DIVELA REMIX feat 超学生／ Anti Beat (Ver.Chogakusei)", id: "3pWeLGOW1FA"},
+    { title: "【歌え！】ロストワンの号哭／DIVELA REMIX＠歌ってみた／ The Lost One's Weeping (Ver.Chogakusei)", id: "ap4_rzlJnZw"},
+    { title: "【歌え！】ブリキノダンス／DIVELA REMIX＠歌ってみた／ Buriki no Dance (Ver.Chogakusei)", id: "H5U90ekck9Q"},
+    { title: "中二が「スクラマイズ__」を歌ってみたｗｗｗｗｗｗｗｗ／ Scrumize (Ver.Chogakusei)", id: "oDabE0nQR2g"},
+    { title: "「曖昧劣情Lover」歌ってみた【超学生】 ／ Vague Lust Lover (Ver.Chogakusei)", id: "AzzHyk-J5vY"}
+  ];
+
+  const topView = document.getElementById('top-view');
+  const loadingView = document.getElementById('loading-view');
+  const resultView = document.getElementById('result-view');
+  const videoContainer = document.getElementById('video-container');
+  const songNameEl = document.getElementById('song-name');
+  const gachaVideo = document.getElementById('gacha-video');
+  const resultBgm = document.getElementById('result-bgm');
+  const clickSound = document.getElementById('click-sound');
+
+  // BGMの音量を設定
+  resultBgm.volume = 0.3;
+
+  // ガチャを引くボタン
+  document.getElementById('gachaBtn').addEventListener('click', function() {
+
+    // 1. ボタンが押された瞬間に効果音だけを先に鳴らす
+    clickSound.currentTime = 0;
+    clickSound.play();
+
+    // スマホの音声ブロックを解除
+    resultBgm.play().then(() => {
+      resultBgm.pause();
+      resultBgm.currentTime = 0;
+    }).catch(error => {
+      console.log("音声ロック解除エラー:", error);
+    });
+
+    // 2. 「300ミリ秒（0.3秒）待ってから」画面を切り替えて動画を再生する
+    setTimeout(function() {
+      topView.style.display = 'none';
+      loadingView.style.display = 'flex';
+      
+      gachaVideo.currentTime = 0;
+      gachaVideo.play();
+    }, 300); // 300ミリ秒（0.3秒）待つ
+  });
+
+  // ▼ 新規追加：動画の再生が最後まで終わった瞬間に発動する処理
+  gachaVideo.addEventListener('ended', function() {
+    const randomIndex = Math.floor(Math.random() * songList.length);
+    const selectedSong = songList[randomIndex];
+
+      // 曲名とアーティスト名
+      songNameEl.innerHTML = `${selectedSong.title}<span class="artist-name">超学生</span>`;
+      
+      // サムネイル画像の挿入
+      const thumbnailUrl = `https://img.youtube.com/vi/${selectedSong.id}/hqdefault.jpg`;
+      const youtubeUrl = `https://www.youtube.com/watch?v=${selectedSong.id}`;
+      
+      videoContainer.innerHTML = `
+        <a href="${youtubeUrl}" target="_blank" rel="noopener noreferrer" class="thumbnail-link">
+          <img src="${thumbnailUrl}" alt="${selectedSong.title}" class="thumbnail-img">
+          <div class="play-overlay">▶ YouTubeで聴く</div>
+        </a>
+      `;
+
+      // ▼ シェア機能の追加ここから ▼
+      // 1. シェアしたい文章を作成
+      const shareText = `#超学生さん誕生日記念ガチャ\n\n超学生さん誕生日記念ガチャを引きました！\n🔗https://shiiii4.github.io/unofficial_chogakusei_gacha/\n出た曲は『${selectedSong.title}』です！\n🔗🎶${youtubeUrl}\n超さんへの愛を叫んでもよし、感想や要望を書いてもよし！お好きにお使いください！遊んでくれてありがとうございます！`;
+
+      // 2. 文章をURL用に変換して、Xの共有用URLを作成
+      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+
+      // 3. シェアボタンが押されたら、新しいタブでXを開くように設定
+      const shareBtn = document.querySelector('.btn-secondary');
+      shareBtn.onclick = function() {
+        window.open(twitterUrl, '_blank');
+      };
+      // ▲ シェア機能の追加ここまで ▲
+
+      loadingView.style.display = 'none';
+      resultView.style.display = 'flex';
+
+      // ▼ 新規追加：結果画面が表示されたらBGMを再生
+      resultBgm.play();
+  });
+
+  // もう一度引くボタン
+  document.getElementById('retryBtn').addEventListener('click', function() {
+  // ▼ 新規追加：BGMを止めて、音声を最初に戻す
+    resultBgm.pause();
+    resultBgm.currentTime = 0;
+
+    videoContainer.innerHTML = '';
+    resultView.style.display = 'none';
+    topView.style.display = 'flex';
+  });
+</script>
+
+</body>
+</html>
